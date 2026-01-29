@@ -16,6 +16,17 @@ public static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
+    #endregion
+
+    #region 系统功能 API
+
+    /// <summary>
+    /// 锁定工作站（锁屏）
+    /// 注意：Win+L 是受保护的快捷键，SendInput 无法模拟，需要直接调用此 API
+    /// </summary>
+    [DllImport("user32.dll")]
+    public static extern bool LockWorkStation();
+
     /// <summary>
     /// 获取系统指标
     /// </summary>

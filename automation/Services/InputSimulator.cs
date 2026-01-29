@@ -1,5 +1,6 @@
 using automation.Core.HidDefinitions;
 using automation.Core.Interfaces;
+using automation.Core.Native;
 using automation.Devices;
 
 namespace automation.Services;
@@ -306,6 +307,19 @@ public class InputSimulator
     public (int x, int y) GetMousePosition()
     {
         return Mouse.GetPosition();
+    }
+
+    #endregion
+
+    #region 系统操作
+
+    /// <summary>
+    /// 锁定工作站（锁屏）
+    /// 注意：Win+L 是受保护的快捷键，SendInput 无法模拟，需要使用此方法
+    /// </summary>
+    public static bool LockScreen()
+    {
+        return NativeMethods.LockWorkStation();
     }
 
     #endregion

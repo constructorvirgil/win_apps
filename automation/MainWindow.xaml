@@ -235,6 +235,7 @@
                                 <Button Content="Alt+Tab" Click="AltTab_Click"/>
                                 <Button Content="Win+D" Click="WinD_Click"/>
                                 <Button Content="Win+E" Click="WinE_Click"/>
+                                <Button Content="锁屏" Click="LockScreen_Click" ToolTip="直接调用 LockWorkStation API（Win+L 受系统保护无法模拟）"/>
                             </WrapPanel>
                         </GroupBox>
                         

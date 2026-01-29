@@ -337,6 +337,14 @@ public partial class MainWindow : Window
         UpdateStatus("按下 Win+E (打开资源管理器)");
     }
 
+    private void LockScreen_Click(object sender, RoutedEventArgs e)
+    {
+        // Win+L 是受保护的快捷键，SendInput 无法模拟
+        // 需要直接调用 LockWorkStation API
+        bool result = InputSimulator.LockScreen();
+        UpdateStatus(result ? "已锁定工作站" : "锁屏失败");
+    }
+
     #endregion
 
     #region 键盘 - 自定义组合键
