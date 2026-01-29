@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using automation.Core.Drivers;
 using automation.Core.HidDefinitions;
 using automation.Services;
 
@@ -18,8 +20,140 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         _simulator = InputSimulator.Create();
+        
+        // 初始化驱动选择
+        InitializeDriverSelection();
+        
         UpdateStatus("输入模拟器已初始化");
     }
+
+    #region 驱动选择
+
+    private bool _isRefreshingDriverList = false;
+
+    private void InitializeDriverSelection()
+    {
+        RefreshDriverList();
+    }
+
+    private void RefreshDriverList()
+    {
+        if (_isRefreshingDriverList) return;
+        
+        _isRefreshingDriverList = true;
+        try
+        {
+            var drivers = InputSimulator.GetAvailableDrivers().Select(d => new DriverDisplayItem
+            {
+                Type = d.Type,
+                Name = d.Name,
+                Description = d.Description,
+                IsAvailable = d.IsAvailable,
+                SupportsLockScreen = d.SupportsLockScreen,
+                IsCurrent = d.IsCurrent
+            }).ToList();
+
+            DriverComboBox.ItemsSource = drivers;
+            
+            // 选择当前驱动
+            var currentDriver = drivers.FirstOrDefault(d => d.IsCurrent);
+            if (currentDriver != null)
+            {
+                DriverComboBox.SelectedItem = currentDriver;
+            }
+        }
+        finally
+        {
+            _isRefreshingDriverList = false;
+        }
+    }
+
+    private void DriverComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // 防止递归调用
+        if (_isRefreshingDriverList) return;
+        
+        if (DriverComboBox.SelectedItem is DriverDisplayItem item)
+        {
+            // 如果已经是当前驱动，不做处理
+            if (item.IsCurrent) return;
+            
+            if (!item.IsAvailable)
+            {
+                MessageBox.Show(
+                    $"驱动 '{item.Name}' 不可用。\n\n{GetDriverInstallHelp(item.Type)}",
+                    "驱动不可用",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                
+                // 恢复到当前驱动
+                RefreshDriverList();
+                return;
+            }
+
+            bool success = InputSimulator.SetDriver(item.Type);
+            if (success)
+            {
+                UpdateStatus($"已切换到 {item.Name} 驱动");
+                RefreshDriverList();
+            }
+            else
+            {
+                MessageBox.Show($"切换到 {item.Name} 驱动失败", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                RefreshDriverList();
+            }
+        }
+    }
+
+    private void DriverHelp_Click(object sender, RoutedEventArgs e)
+    {
+        string helpText = @"=== 驱动说明 ===
+
+【SendInput】(默认)
+- Windows 内置 API，无需安装
+- 用户模式，无法在锁屏状态下工作
+- 适用于：普通自动化场景
+
+【Interception】(推荐用于锁屏解锁)
+- 内核模式驱动，可绕过系统安全限制
+- 支持在锁屏状态下模拟输入
+- 需要安装驱动程序
+
+=== Interception 安装方法 ===
+
+1. 下载驱动：
+   https://github.com/oblitum/Interception/releases
+
+2. 以管理员身份运行命令：
+   install-interception.exe /install
+
+3. 重启电脑
+
+4. 将 interception.dll 复制到程序目录
+
+=== 注意事项 ===
+- Interception 驱动需要管理员权限安装
+- 安装后需要重启电脑才能生效
+- 部分杀毒软件可能会拦截内核驱动";
+
+        MessageBox.Show(helpText, "驱动帮助", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private static string GetDriverInstallHelp(DriverType type)
+    {
+        return type switch
+        {
+            DriverType.Interception => 
+                "Interception 驱动需要安装：\n" +
+                "1. 下载：https://github.com/oblitum/Interception/releases\n" +
+                "2. 管理员运行：install-interception.exe /install\n" +
+                "3. 重启电脑\n" +
+                "4. 将 interception.dll 复制到程序目录",
+            _ => "该驱动不可用"
+        };
+    }
+
+    #endregion
 
     #region 状态更新
 
@@ -613,4 +747,25 @@ public partial class MainWindow : Window
     }
 
     #endregion
+}
+
+/// <summary>
+/// 驱动显示项（用于 ComboBox 绑定）
+/// </summary>
+public class DriverDisplayItem
+{
+    public DriverType Type { get; set; }
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public bool IsAvailable { get; set; }
+    public bool SupportsLockScreen { get; set; }
+    public bool IsCurrent { get; set; }
+
+    public string StatusText => IsAvailable 
+        ? (SupportsLockScreen ? "可用 (支持锁屏)" : "可用") 
+        : "未安装";
+    
+    public Brush StatusColor => IsAvailable 
+        ? (SupportsLockScreen ? Brushes.Green : Brushes.DarkGreen)
+        : Brushes.Gray;
 }

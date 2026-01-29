@@ -1,16 +1,17 @@
+using automation.Core.Drivers;
 using automation.Core.HidDefinitions;
 using automation.Core.Interfaces;
-using automation.Core.Native;
-using static automation.Core.Native.NativeMethods;
 
 namespace automation.Devices;
 
 /// <summary>
 /// 虚拟键盘实现
-/// 使用 Windows SendInput API 模拟键盘操作
+/// 通过驱动管理器使用底层驱动模拟键盘操作
 /// </summary>
 public class VirtualKeyboard : IVirtualKeyboard
 {
+    private IInputDriver Driver => DriverManager.Instance.CurrentDriver;
+
     #region 单键操作
 
     /// <inheritdoc/>
@@ -23,20 +24,13 @@ public class VirtualKeyboard : IVirtualKeyboard
     /// <inheritdoc/>
     public void KeyDown(ushort keyCode)
     {
-        var flags = IsExtendedKey(keyCode) ? KeyEventFlags.KEYEVENTF_EXTENDEDKEY : 0;
-        var input = CreateKeyboardInput(keyCode, flags);
-        SendInput(1, [input], InputSize);
+        Driver.KeyDown(keyCode);
     }
 
     /// <inheritdoc/>
     public void KeyUp(ushort keyCode)
     {
-        var flags = KeyEventFlags.KEYEVENTF_KEYUP;
-        if (IsExtendedKey(keyCode))
-            flags |= KeyEventFlags.KEYEVENTF_EXTENDEDKEY;
-
-        var input = CreateKeyboardInput(keyCode, flags);
-        SendInput(1, [input], InputSize);
+        Driver.KeyUp(keyCode);
     }
 
     #endregion
@@ -237,40 +231,7 @@ public class VirtualKeyboard : IVirtualKeyboard
     /// </summary>
     private void TypeUnicodeChar(char c)
     {
-        var inputDown = CreateUnicodeInput(c, keyUp: false);
-        var inputUp = CreateUnicodeInput(c, keyUp: true);
-
-        SendInput(1, [inputDown], InputSize);
-        SendInput(1, [inputUp], InputSize);
-    }
-
-    /// <summary>
-    /// 判断是否为扩展键
-    /// </summary>
-    private static bool IsExtendedKey(ushort keyCode)
-    {
-        return keyCode switch
-        {
-            VirtualKeyCodes.VK_INSERT or
-            VirtualKeyCodes.VK_DELETE or
-            VirtualKeyCodes.VK_HOME or
-            VirtualKeyCodes.VK_END or
-            VirtualKeyCodes.VK_PRIOR or
-            VirtualKeyCodes.VK_NEXT or
-            VirtualKeyCodes.VK_LEFT or
-            VirtualKeyCodes.VK_RIGHT or
-            VirtualKeyCodes.VK_UP or
-            VirtualKeyCodes.VK_DOWN or
-            VirtualKeyCodes.VK_NUMLOCK or
-            VirtualKeyCodes.VK_SNAPSHOT or
-            VirtualKeyCodes.VK_DIVIDE or
-            VirtualKeyCodes.VK_RCONTROL or
-            VirtualKeyCodes.VK_RMENU or
-            VirtualKeyCodes.VK_LWIN or
-            VirtualKeyCodes.VK_RWIN or
-            VirtualKeyCodes.VK_APPS => true,
-            _ => false
-        };
+        Driver.SendUnicode(c);
     }
 
     #endregion

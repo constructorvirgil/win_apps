@@ -1,31 +1,28 @@
+using automation.Core.Drivers;
 using automation.Core.Interfaces;
-using automation.Core.Native;
-using static automation.Core.Native.NativeMethods;
 
 namespace automation.Devices;
 
 /// <summary>
 /// 虚拟鼠标实现
-/// 使用 Windows SendInput API 模拟鼠标操作
+/// 通过驱动管理器使用底层驱动模拟鼠标操作
 /// </summary>
 public class VirtualMouse : IVirtualMouse
 {
+    private IInputDriver Driver => DriverManager.Instance.CurrentDriver;
+
     #region 移动操作
 
     /// <inheritdoc/>
     public void MoveTo(int x, int y)
     {
-        var (absX, absY) = NativeMethods.ToAbsoluteCoordinates(x, y);
-        var input = CreateMouseInput(absX, absY, 0,
-            MouseEventFlags.MOUSEEVENTF_MOVE | MouseEventFlags.MOUSEEVENTF_ABSOLUTE);
-        SendInput(1, [input], InputSize);
+        Driver.MouseMoveTo(x, y);
     }
 
     /// <inheritdoc/>
     public void MoveBy(int deltaX, int deltaY)
     {
-        var input = CreateMouseInput(deltaX, deltaY, 0, MouseEventFlags.MOUSEEVENTF_MOVE);
-        SendInput(1, [input], InputSize);
+        Driver.MouseMoveBy(deltaX, deltaY);
     }
 
     /// <inheritdoc/>
@@ -108,43 +105,37 @@ public class VirtualMouse : IVirtualMouse
     /// <inheritdoc/>
     public void LeftDown()
     {
-        var input = CreateMouseInput(0, 0, 0, MouseEventFlags.MOUSEEVENTF_LEFTDOWN);
-        SendInput(1, [input], InputSize);
+        Driver.MouseButtonDown(MouseButton.Left);
     }
 
     /// <inheritdoc/>
     public void LeftUp()
     {
-        var input = CreateMouseInput(0, 0, 0, MouseEventFlags.MOUSEEVENTF_LEFTUP);
-        SendInput(1, [input], InputSize);
+        Driver.MouseButtonUp(MouseButton.Left);
     }
 
     /// <inheritdoc/>
     public void RightDown()
     {
-        var input = CreateMouseInput(0, 0, 0, MouseEventFlags.MOUSEEVENTF_RIGHTDOWN);
-        SendInput(1, [input], InputSize);
+        Driver.MouseButtonDown(MouseButton.Right);
     }
 
     /// <inheritdoc/>
     public void RightUp()
     {
-        var input = CreateMouseInput(0, 0, 0, MouseEventFlags.MOUSEEVENTF_RIGHTUP);
-        SendInput(1, [input], InputSize);
+        Driver.MouseButtonUp(MouseButton.Right);
     }
 
     /// <inheritdoc/>
     public void MiddleDown()
     {
-        var input = CreateMouseInput(0, 0, 0, MouseEventFlags.MOUSEEVENTF_MIDDLEDOWN);
-        SendInput(1, [input], InputSize);
+        Driver.MouseButtonDown(MouseButton.Middle);
     }
 
     /// <inheritdoc/>
     public void MiddleUp()
     {
-        var input = CreateMouseInput(0, 0, 0, MouseEventFlags.MOUSEEVENTF_MIDDLEUP);
-        SendInput(1, [input], InputSize);
+        Driver.MouseButtonUp(MouseButton.Middle);
     }
 
     #endregion
@@ -154,16 +145,13 @@ public class VirtualMouse : IVirtualMouse
     /// <inheritdoc/>
     public void ScrollVertical(int delta)
     {
-        // WHEEL_DELTA = 120
-        var input = CreateMouseInput(0, 0, (uint)(delta * 120), MouseEventFlags.MOUSEEVENTF_WHEEL);
-        SendInput(1, [input], InputSize);
+        Driver.MouseWheel(delta, horizontal: false);
     }
 
     /// <inheritdoc/>
     public void ScrollHorizontal(int delta)
     {
-        var input = CreateMouseInput(0, 0, (uint)(delta * 120), MouseEventFlags.MOUSEEVENTF_HWHEEL);
-        SendInput(1, [input], InputSize);
+        Driver.MouseWheel(delta, horizontal: true);
     }
 
     #endregion
@@ -193,11 +181,7 @@ public class VirtualMouse : IVirtualMouse
     /// <inheritdoc/>
     public (int x, int y) GetPosition()
     {
-        if (GetCursorPos(out POINT point))
-        {
-            return (point.X, point.Y);
-        }
-        return (0, 0);
+        return Driver.GetMousePosition();
     }
 
     #endregion

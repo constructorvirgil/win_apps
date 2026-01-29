@@ -45,6 +45,18 @@ public static class NativeMethods
     [DllImport("user32.dll")]
     public static extern bool SetCursorPos(int x, int y);
 
+    /// <summary>
+    /// 将虚拟键码转换为扫描码
+    /// </summary>
+    [DllImport("user32.dll")]
+    public static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+    /// <summary>
+    /// 将字符转换为虚拟键码
+    /// </summary>
+    [DllImport("user32.dll")]
+    public static extern short VkKeyScan(char ch);
+
     #endregion
 
     #region 系统指标常量

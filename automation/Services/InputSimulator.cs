@@ -1,3 +1,4 @@
+using automation.Core.Drivers;
 using automation.Core.HidDefinitions;
 using automation.Core.Interfaces;
 using automation.Core.Native;
@@ -324,6 +325,54 @@ public class InputSimulator
 
     #endregion
 
+    #region 驱动管理
+
+    /// <summary>
+    /// 获取当前使用的驱动类型
+    /// </summary>
+    public static DriverType CurrentDriverType => DriverManager.Instance.CurrentDriverType;
+
+    /// <summary>
+    /// 获取当前驱动信息
+    /// </summary>
+    public static IInputDriver CurrentDriver => DriverManager.Instance.CurrentDriver;
+
+    /// <summary>
+    /// 切换驱动
+    /// </summary>
+    /// <param name="driverType">驱动类型</param>
+    /// <returns>是否切换成功</returns>
+    public static bool SetDriver(DriverType driverType)
+    {
+        return DriverManager.Instance.SetDriver(driverType);
+    }
+
+    /// <summary>
+    /// 获取所有可用的驱动信息
+    /// </summary>
+    public static IEnumerable<DriverInfo> GetAvailableDrivers()
+    {
+        return DriverManager.Instance.GetAvailableDrivers();
+    }
+
+    /// <summary>
+    /// 检查指定驱动是否可用
+    /// </summary>
+    public static bool IsDriverAvailable(DriverType driverType)
+    {
+        return DriverManager.Instance.IsDriverAvailable(driverType);
+    }
+
+    /// <summary>
+    /// 自动选择最佳可用驱动（优先使用支持锁屏的驱动）
+    /// </summary>
+    public static DriverType UseBestDriver()
+    {
+        return DriverManager.Instance.UseBestAvailableDriver();
+    }
+
+    #endregion
+
     #region 静态工厂方法
 
     /// <summary>
@@ -331,6 +380,15 @@ public class InputSimulator
     /// </summary>
     public static InputSimulator Create()
     {
+        return new InputSimulator();
+    }
+
+    /// <summary>
+    /// 创建输入模拟器实例并指定驱动
+    /// </summary>
+    public static InputSimulator Create(DriverType driverType)
+    {
+        SetDriver(driverType);
         return new InputSimulator();
     }
 

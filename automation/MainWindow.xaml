@@ -34,9 +34,33 @@
         </Grid.RowDefinitions>
         
         <!-- 标题区域 -->
-        <TextBlock Grid.Row="0" Text="虚拟 HID 键盘/鼠标模拟测试工具" 
-                   FontSize="20" FontWeight="Bold" 
-                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="虚拟 HID 键盘/鼠标模拟测试工具" 
+                       FontSize="20" FontWeight="Bold" 
+                       HorizontalAlignment="Center"/>
+            
+            <!-- 驱动选择 -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="驱动:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <ComboBox x:Name="DriverComboBox" Width="150" SelectionChanged="DriverComboBox_SelectionChanged">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <TextBlock Text=" - "/>
+                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="?" Width="25" Margin="5,0,0,0" Click="DriverHelp_Click" 
+                        ToolTip="查看驱动帮助信息"/>
+            </StackPanel>
+        </Grid>
         
         <!-- 主内容区域 -->
         <TabControl Grid.Row="1">
