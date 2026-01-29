@@ -12,7 +12,7 @@
 ```
 automation/
 ├── Core/                           # 核心层
-│   ├── Drivers/                    # 驱动层（新增）
+│   ├── Drivers/                    # 驱动层
 │   │   ├── IInputDriver.cs         # 驱动接口定义
 │   │   ├── SendInputDriver.cs      # SendInput API 实现
 │   │   ├── InterceptionDriver.cs   # Interception 驱动实现
@@ -28,7 +28,8 @@ automation/
 │   ├── VirtualKeyboard.cs          # 键盘设备
 │   └── VirtualMouse.cs             # 鼠标设备
 ├── Services/                       # 服务层
-│   └── InputSimulator.cs           # 统一 API 入口
+│   ├── InputSimulator.cs           # 统一 API 入口
+│   └── InterceptionInstaller.cs    # 驱动自动安装器（新增）
 └── MainWindow.xaml/cs              # 测试界面
 ```
 
@@ -74,6 +75,18 @@ InputSimulator.LockScreen();
 - 或手动唤醒屏幕后再执行自动化
 
 ### 3. Interception 驱动安装
+
+**方式一：自动安装（推荐）**
+
+程序内置了自动安装功能，点击界面右上角的「安装驱动」按钮即可自动完成：
+1. 从 GitHub 下载驱动包
+2. 解压并执行安装程序
+3. 复制 DLL 到程序目录
+4. 提示重启电脑
+
+> 注意：自动安装需要管理员权限，程序会提示以管理员身份重启。
+
+**方式二：手动安装**
 ```bash
 # 下载：https://github.com/oblitum/Interception/releases
 # 管理员运行：
@@ -88,7 +101,8 @@ install-interception.exe /install
 2. **键盘测试**：文本输入、单键、功能键、组合键
 3. **屏幕解锁**：预设账号密码，延迟后自动输入解锁
 4. **驱动切换**：右上角下拉框选择驱动
-5. **测试目标区域**：验证输入效果
+5. **驱动安装**：一键自动下载并安装 Interception 驱动
+6. **测试目标区域**：验证输入效果
 
 ## 修复的问题
 
@@ -103,9 +117,37 @@ install-interception.exe /install
 2. **Interception 需要安装**：需要管理员权限安装驱动并重启
 3. **账号字段**：Windows 锁屏解锁通常只需要密码，账号字段保留以防特殊情况
 
+## 驱动自动安装功能
+
+### InterceptionInstaller 服务
+
+新增的 `InterceptionInstaller` 服务类提供：
+
+- **自动下载**：从 GitHub 下载 Interception 驱动包
+- **自动解压**：解压到临时目录
+- **自动安装**：执行 `install-interception.exe /install`
+- **自动复制 DLL**：将正确架构的 DLL 复制到程序目录
+- **进度回调**：实时显示安装进度
+- **权限检测**：检测并提示管理员权限
+- **重启提示**：安装完成后可选择立即重启
+
+### 使用方式
+
+```csharp
+var installer = new InterceptionInstaller();
+installer.ProgressChanged += msg => Console.WriteLine(msg);
+
+var result = await installer.InstallAsync();
+if (result.NeedRestart)
+{
+    // 提示用户重启
+}
+```
+
 ## 后续可扩展
 
 1. 添加更多驱动支持（如 DD 虚拟驱动）
 2. 录制/回放功能
 3. 脚本化操作
 4. 真正的 VHF 内核驱动实现（需要编写 KMDF 驱动）
+5. 驱动安装的镜像下载源（解决 GitHub 访问问题）

@@ -59,6 +59,9 @@
                 </ComboBox>
                 <Button Content="?" Width="25" Margin="5,0,0,0" Click="DriverHelp_Click" 
                         ToolTip="查看驱动帮助信息"/>
+                <Button x:Name="InstallDriverButton" Content="安装驱动" Margin="5,0,0,0" 
+                        Click="InstallDriver_Click" ToolTip="自动下载并安装 Interception 驱动"
+                        Background="#FF2196F3" Foreground="White" FontWeight="Bold"/>
             </StackPanel>
         </Grid>
         

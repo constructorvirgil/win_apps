@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -119,7 +120,10 @@ public partial class MainWindow : Window
 - 支持在锁屏状态下模拟输入
 - 需要安装驱动程序
 
-=== Interception 安装方法 ===
+=== 自动安装 ===
+点击「安装驱动」按钮可自动下载并安装 Interception 驱动。
+
+=== 手动安装方法 ===
 
 1. 下载驱动：
    https://github.com/oblitum/Interception/releases
@@ -137,6 +141,129 @@ public partial class MainWindow : Window
 - 部分杀毒软件可能会拦截内核驱动";
 
         MessageBox.Show(helpText, "驱动帮助", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private async void InstallDriver_Click(object sender, RoutedEventArgs e)
+    {
+        // 检查 Interception 驱动是否已可用
+        if (InputSimulator.IsDriverAvailable(DriverType.Interception))
+        {
+            MessageBox.Show(
+                "Interception 驱动已安装且可用，无需重复安装。",
+                "驱动已安装",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        // 检查管理员权限
+        if (!InterceptionInstaller.IsRunningAsAdmin())
+        {
+            var result = MessageBox.Show(
+                "安装 Interception 驱动需要管理员权限。\n\n是否以管理员身份重新启动程序？",
+                "需要管理员权限",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                if (InterceptionInstaller.RestartAsAdmin())
+                {
+                    Application.Current.Shutdown();
+                }
+                else
+                {
+                    MessageBox.Show("无法以管理员身份启动，请手动右键程序选择「以管理员身份运行」。",
+                        "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            return;
+        }
+
+        // 确认安装
+        var confirmResult = MessageBox.Show(
+            "即将自动下载并安装 Interception 内核驱动。\n\n" +
+            "安装过程包括：\n" +
+            "1. 从 GitHub 下载驱动包\n" +
+            "2. 安装内核驱动（需要管理员权限）\n" +
+            "3. 复制 DLL 文件到程序目录\n\n" +
+            "注意：安装完成后需要重启电脑才能生效。\n\n" +
+            "是否继续？",
+            "安装 Interception 驱动",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirmResult != MessageBoxResult.Yes)
+            return;
+
+        // 禁用安装按钮
+        InstallDriverButton.IsEnabled = false;
+        InstallDriverButton.Content = "安装中...";
+
+        var installer = new InterceptionInstaller();
+        installer.ProgressChanged += msg => Dispatcher.Invoke(() => UpdateStatus(msg));
+
+        try
+        {
+            var installResult = await installer.InstallAsync();
+
+            switch (installResult.Status)
+            {
+                case InterceptionInstaller.InstallStatus.NeedRestart:
+                    var restartResult = MessageBox.Show(
+                        installResult.Message + "\n\n是否立即重启电脑？",
+                        "安装完成",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (restartResult == MessageBoxResult.Yes)
+                    {
+                        // 重启电脑
+                        Process.Start("shutdown", "/r /t 5 /c \"Interception 驱动安装完成，系统将在5秒后重启。\"");
+                        Application.Current.Shutdown();
+                    }
+                    break;
+
+                case InterceptionInstaller.InstallStatus.Success:
+                case InterceptionInstaller.InstallStatus.AlreadyInstalled:
+                    MessageBox.Show(installResult.Message, "完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                    RefreshDriverList();
+                    break;
+
+                case InterceptionInstaller.InstallStatus.DownloadFailed:
+                    MessageBox.Show(
+                        installResult.Message + "\n\n可能的原因：\n" +
+                        "- 网络连接问题\n" +
+                        "- 无法访问 GitHub\n\n" +
+                        "您可以尝试手动下载：\nhttps://github.com/oblitum/Interception/releases",
+                        "下载失败",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    break;
+
+                case InterceptionInstaller.InstallStatus.NeedAdminPrivilege:
+                    MessageBox.Show(installResult.Message, "权限不足", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    break;
+
+                case InterceptionInstaller.InstallStatus.Cancelled:
+                    UpdateStatus("安装已取消");
+                    break;
+
+                default:
+                    MessageBox.Show(installResult.Message, "安装失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"安装过程中发生错误：\n{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            InstallDriverButton.IsEnabled = true;
+            InstallDriverButton.Content = "安装驱动";
+            RefreshDriverList();
+        }
     }
 
     private static string GetDriverInstallHelp(DriverType type)
