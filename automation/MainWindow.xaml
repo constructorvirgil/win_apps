@@ -239,6 +239,56 @@
                             </WrapPanel>
                         </GroupBox>
                         
+                        <!-- 屏幕解锁 -->
+                        <GroupBox Header="屏幕解锁">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Content="账号:" Grid.Column="0"/>
+                                    <TextBox x:Name="UnlockUsernameTextBox" Grid.Column="1" Text="GIGABYTE"/>
+                                    <Label Content="密码:" Grid.Column="2"/>
+                                    <Grid Grid.Column="3">
+                                        <PasswordBox x:Name="UnlockPasswordBox" Password="vvvqwe123"
+                                                     Visibility="Visible"/>
+                                        <TextBox x:Name="UnlockPasswordTextBox" Text="vvvqwe123"
+                                                 Visibility="Collapsed"/>
+                                    </Grid>
+                                    <CheckBox x:Name="ShowPasswordCheckBox" Grid.Column="4" 
+                                              Content="显示密码" VerticalAlignment="Center" Margin="10,0,0,0"
+                                              Checked="ShowPassword_Checked" Unchecked="ShowPassword_Unchecked"/>
+                                </Grid>
+                                <Grid Margin="0,5,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Content="延迟(秒):" Grid.Column="0"/>
+                                    <TextBox x:Name="UnlockDelayTextBox" Grid.Column="1" Text="2"/>
+                                </Grid>
+                                <TextBlock TextWrapping="Wrap" Foreground="OrangeRed" FontSize="11" Margin="3,5,0,5">
+                                    <Run FontWeight="Bold">重要提示：</Run>
+                                    <Run>Windows 安全限制导致 SendInput 在锁屏状态下无效。</Run>
+                                    <LineBreak/>
+                                    <Run>此功能仅适用于：屏幕已被手动唤醒（显示密码输入框）后，自动输入密码。</Run>
+                                </TextBlock>
+                                <WrapPanel>
+                                    <Button x:Name="UnlockButton" Content="解锁屏幕" Click="UnlockScreen_Click" 
+                                            Background="#FF4CAF50" Foreground="White" FontWeight="Bold"/>
+                                    <Button x:Name="CancelUnlockButton" Content="取消" Click="CancelUnlock_Click" 
+                                            IsEnabled="False" Background="#FFF44336" Foreground="White"/>
+                                    <Button Content="锁屏+解锁测试" Click="LockAndUnlock_Click" 
+                                            ToolTip="先锁屏，然后自动解锁（注意：锁屏后需手动唤醒屏幕）"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        
                         <!-- 自定义组合键 -->
                         <GroupBox Header="自定义组合键">
                             <StackPanel>

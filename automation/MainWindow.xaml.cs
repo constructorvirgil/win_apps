@@ -347,6 +347,183 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region 屏幕解锁
+
+    private CancellationTokenSource? _unlockCancellation;
+
+    private void ShowPassword_Checked(object sender, RoutedEventArgs e)
+    {
+        // 切换到明文显示
+        UnlockPasswordTextBox.Text = UnlockPasswordBox.Password;
+        UnlockPasswordBox.Visibility = Visibility.Collapsed;
+        UnlockPasswordTextBox.Visibility = Visibility.Visible;
+    }
+
+    private void ShowPassword_Unchecked(object sender, RoutedEventArgs e)
+    {
+        // 切换到密码显示
+        UnlockPasswordBox.Password = UnlockPasswordTextBox.Text;
+        UnlockPasswordTextBox.Visibility = Visibility.Collapsed;
+        UnlockPasswordBox.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>
+    /// 获取当前密码（兼容两种显示模式）
+    /// </summary>
+    private string GetUnlockPassword()
+    {
+        return ShowPasswordCheckBox.IsChecked == true 
+            ? UnlockPasswordTextBox.Text 
+            : UnlockPasswordBox.Password;
+    }
+
+    private void SetUnlockButtonsState(bool isRunning)
+    {
+        UnlockButton.IsEnabled = !isRunning;
+        CancelUnlockButton.IsEnabled = isRunning;
+    }
+
+    private void CancelUnlock_Click(object sender, RoutedEventArgs e)
+    {
+        _unlockCancellation?.Cancel();
+        UpdateStatus("已取消解锁操作");
+        SetUnlockButtonsState(false);
+    }
+
+    private async void UnlockScreen_Click(object sender, RoutedEventArgs e)
+    {
+        // 获取密码
+        string password = GetUnlockPassword();
+        if (string.IsNullOrEmpty(password))
+        {
+            UpdateStatus("请输入密码");
+            return;
+        }
+
+        // 获取延迟时间
+        if (!int.TryParse(UnlockDelayTextBox.Text, out int delaySec) || delaySec < 0)
+        {
+            delaySec = 2;
+        }
+
+        // 创建取消令牌
+        _unlockCancellation?.Cancel();
+        _unlockCancellation = new CancellationTokenSource();
+        var token = _unlockCancellation.Token;
+
+        SetUnlockButtonsState(true);
+
+        try
+        {
+            // 倒计时显示
+            for (int i = delaySec; i > 0; i--)
+            {
+                UpdateStatus($"将在 {i} 秒后开始输入密码... (点击取消可中止)");
+                await Task.Delay(1000, token);
+            }
+
+            // 执行解锁（只输入密码，不尝试唤醒）
+            await PerformUnlockAsync(password, token);
+        }
+        catch (OperationCanceledException)
+        {
+            UpdateStatus("解锁操作已取消");
+        }
+        finally
+        {
+            SetUnlockButtonsState(false);
+        }
+    }
+
+    private async void LockAndUnlock_Click(object sender, RoutedEventArgs e)
+    {
+        // 获取密码
+        string password = GetUnlockPassword();
+        if (string.IsNullOrEmpty(password))
+        {
+            UpdateStatus("请输入密码");
+            return;
+        }
+
+        // 获取延迟时间
+        if (!int.TryParse(UnlockDelayTextBox.Text, out int delaySec) || delaySec < 0)
+        {
+            delaySec = 2;
+        }
+
+        // 创建取消令牌
+        _unlockCancellation?.Cancel();
+        _unlockCancellation = new CancellationTokenSource();
+        var token = _unlockCancellation.Token;
+
+        SetUnlockButtonsState(true);
+
+        try
+        {
+            // 先锁屏
+            UpdateStatus("正在锁定屏幕...");
+            InputSimulator.LockScreen();
+
+            // 等待锁屏完成
+            await Task.Delay(1000, token);
+
+            // 倒计时显示
+            for (int i = delaySec; i > 0; i--)
+            {
+                UpdateStatus($"屏幕已锁定，将在 {i} 秒后开始输入密码... (请先手动唤醒屏幕!)");
+                await Task.Delay(1000, token);
+            }
+
+            // 执行解锁
+            await PerformUnlockAsync(password, token);
+        }
+        catch (OperationCanceledException)
+        {
+            UpdateStatus("解锁操作已取消");
+        }
+        finally
+        {
+            SetUnlockButtonsState(false);
+        }
+    }
+
+    private async Task PerformUnlockAsync(string password, CancellationToken token)
+    {
+        // 注意：由于 Windows 安全限制，SendInput 无法在锁屏状态下唤醒屏幕
+        // 此功能假设用户已经手动唤醒屏幕并显示了密码输入框
+
+        UpdateStatus("正在尝试进入密码输入状态...");
+
+        // 步骤1：尝试激活密码输入（如果屏幕已唤醒）
+        _simulator.PressKey(VirtualKeyCodes.VK_ESCAPE);
+        await Task.Delay(500, token);
+        
+        _simulator.PressKey(VirtualKeyCodes.VK_RETURN);
+        await Task.Delay(1000, token);
+
+        token.ThrowIfCancellationRequested();
+
+        UpdateStatus("正在输入密码...");
+
+        // 步骤2：输入密码（逐字符输入，便于观察）
+        foreach (char c in password)
+        {
+            token.ThrowIfCancellationRequested();
+            _simulator.Keyboard.TypeChar(c);
+            await Task.Delay(50, token);
+        }
+
+        await Task.Delay(300, token);
+
+        // 步骤3：按 Enter 确认
+        UpdateStatus("正在确认...");
+        _simulator.Keyboard.Enter();
+
+        UpdateStatus("解锁操作已完成（仅执行一次，无循环）");
+    }
+
+    #endregion
+
     #region 键盘 - 自定义组合键
 
     private void CustomCombo_Click(object sender, RoutedEventArgs e)
