@@ -706,12 +706,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 获取延迟时间
-        if (!int.TryParse(UnlockDelayTextBox.Text, out int delaySec) || delaySec < 0)
-        {
-            delaySec = 2;
-        }
-
         // 创建取消令牌
         _unlockCancellation?.Cancel();
         _unlockCancellation = new CancellationTokenSource();
@@ -721,22 +715,33 @@ public partial class MainWindow : Window
 
         try
         {
-            // 先锁屏
-            UpdateStatus("正在锁定屏幕...");
+            // 步骤1：锁屏
+            UpdateStatus("步骤1: 正在锁定屏幕...");
             InputSimulator.LockScreen();
-
-            // 等待锁屏完成
             await Task.Delay(1000, token);
 
-            // 倒计时显示
-            for (int i = delaySec; i > 0; i--)
-            {
-                UpdateStatus($"屏幕已锁定，将在 {i} 秒后开始输入密码... (请先手动唤醒屏幕!)");
-                await Task.Delay(1000, token);
-            }
+            // 步骤2：按回车唤醒/进入密码输入状态
+            UpdateStatus("步骤2: 按回车唤醒屏幕...");
+            _simulator.Keyboard.Enter();
+            await Task.Delay(1000, token);
 
-            // 执行解锁
-            await PerformUnlockAsync(password, token);
+            token.ThrowIfCancellationRequested();
+
+            // 步骤3：逐字符输入密码
+            UpdateStatus("步骤3: 正在输入密码...");
+            foreach (char c in password)
+            {
+                token.ThrowIfCancellationRequested();
+                _simulator.Keyboard.TypeChar(c);
+                await Task.Delay(100, token);
+            }
+            await Task.Delay(1000, token);
+
+            // 步骤4：按回车确认
+            UpdateStatus("步骤4: 按回车确认...");
+            _simulator.Keyboard.Enter();
+
+            UpdateStatus("解锁流程已完成");
         }
         catch (OperationCanceledException)
         {
@@ -750,37 +755,31 @@ public partial class MainWindow : Window
 
     private async Task PerformUnlockAsync(string password, CancellationToken token)
     {
-        // 注意：由于 Windows 安全限制，SendInput 无法在锁屏状态下唤醒屏幕
-        // 此功能假设用户已经手动唤醒屏幕并显示了密码输入框
+        // 解锁流程：回车 -> 输入密码 -> 回车
+        // 每个动作之间延时1秒，每个按键延时100ms
 
-        UpdateStatus("正在尝试进入密码输入状态...");
-
-        // 步骤1：尝试激活密码输入（如果屏幕已唤醒）
-        _simulator.PressKey(VirtualKeyCodes.VK_ESCAPE);
-        await Task.Delay(500, token);
-        
-        _simulator.PressKey(VirtualKeyCodes.VK_RETURN);
+        // 步骤1：按回车唤醒/进入密码输入状态
+        UpdateStatus("步骤1: 按回车唤醒屏幕...");
+        _simulator.Keyboard.Enter();
         await Task.Delay(1000, token);
 
         token.ThrowIfCancellationRequested();
 
-        UpdateStatus("正在输入密码...");
-
-        // 步骤2：输入密码（逐字符输入，便于观察）
+        // 步骤2：逐字符输入密码
+        UpdateStatus("步骤2: 正在输入密码...");
         foreach (char c in password)
         {
             token.ThrowIfCancellationRequested();
             _simulator.Keyboard.TypeChar(c);
-            await Task.Delay(50, token);
+            await Task.Delay(100, token);
         }
+        await Task.Delay(1000, token);
 
-        await Task.Delay(300, token);
-
-        // 步骤3：按 Enter 确认
-        UpdateStatus("正在确认...");
+        // 步骤3：按回车确认
+        UpdateStatus("步骤3: 按回车确认...");
         _simulator.Keyboard.Enter();
 
-        UpdateStatus("解锁操作已完成（仅执行一次，无循环）");
+        UpdateStatus("解锁流程已完成");
     }
 
     #endregion
