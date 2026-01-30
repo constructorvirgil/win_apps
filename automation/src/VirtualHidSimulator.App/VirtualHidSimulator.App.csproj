@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>VirtualHidSimulator</RootNamespace>
+    <AssemblyName>VirtualHidSimulator</AssemblyName>
+    <ApplicationIcon></ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>虚拟 HID 键盘/鼠标输入模拟器</Description>
+  </PropertyGroup>
+
+  <!-- 如需发布为单文件可执行程序，取消注释以下配置 -->
+  <!--
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\\VirtualHidSimulator.Core\\VirtualHidSimulator.Core.csproj" />
+  </ItemGroup>
+
+</Project>
