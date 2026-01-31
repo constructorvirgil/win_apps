@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -6,6 +6,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Core\**" />
+    <Compile Remove="tests\**" />
+    <EmbeddedResource Remove="Core\**" />
+    <EmbeddedResource Remove="tests\**" />
+    <None Remove="Core\**" />
+    <None Remove="tests\**" />
+    <Page Remove="Core\**" />
+    <Page Remove="tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Core\WindowCapture.Core.csproj" />
+  </ItemGroup>
 
 </Project>

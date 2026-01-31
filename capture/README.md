@@ -1,170 +1,203 @@
-# 窗口信息获取工具 (Window Inspector)
+# 窗口信息获取工具
 
-一个功能强大的 Windows 窗口/控件信息获取工具，基于 WPF 和 .NET 8.0 开发。可以实时捕获鼠标位置下的窗口和控件信息，支持窗口树形展示和可视化高亮。
+基于 FlaUI 的 Windows 窗口信息捕获工具，支持精确的窗口和控件识别。
 
-## ✨ 主要功能
+## 功能特性
 
-### 1. 实时窗口信息捕获
-- **窗口句柄**：十六进制和十进制格式显示
-- **窗口标题**：当前窗口的标题文本
-- **窗口类名**：窗口的类名信息
-- **窗口位置和大小**：完整的位置坐标和尺寸信息
-- **进程信息**：进程 ID 和进程名称
-- **父窗口信息**：父窗口句柄或根窗口标识
-- **窗口样式**：解析的窗口样式标志（WS_VISIBLE、WS_CHILD 等）
+- ✨ 基于 UI Automation 的精确窗口识别
+- 🎯 深度控件捕获功能
+- 🌲 窗口层次结构树形展示
+- 🔍 实时鼠标位置追踪
+- 📊 详细的窗口属性信息（AutomationId、ControlType、FrameworkId 等）
+- 🎨 可视化高亮边框
 
-### 2. 控件精确捕获
-- **深度控件识别**：递归获取最深层的子控件
-- **控件详细信息**：句柄、类名、文本内容、位置尺寸
-- **智能捕获切换**：通过复选框开关控件捕获模式
-- **独立信息显示**：控件信息与窗口信息分区显示
+## 项目结构
 
-### 3. 可视化高亮边框
-- **实时边框显示**：在目标窗口/控件周围绘制红色边框
-- **鼠标穿透设计**：边框不影响目标程序的正常操作
-- **自适应 DPI**：支持高 DPI 显示器
-- **可选显示/隐藏**：通过复选框控制是否显示高亮
-
-### 4. 窗口树形结构
-- **完整层级展示**：显示窗口的完整父子关系树
-- **节点详细信息**：
-  - 句柄（十六进制）
-  - 类名
-  - 标题（超过30字符自动截断）
-  - 可见性标识
-- **工具提示增强**：鼠标悬停显示完整窗口信息
-- **点击高亮联动**：点击树节点可高亮对应窗口
-- **刷新模式**：
-  - 手动刷新按钮
-  - 自动刷新选项（跟随鼠标移动）
-
-### 5. 坐标信息显示
-- **屏幕坐标**：鼠标在屏幕上的绝对坐标
-- **窗口坐标**：鼠标相对于目标窗口/控件的客户区坐标
-
-### 6. 快捷键支持
-- **Ctrl 键**：按住时临时切换为只捕获顶级窗口（忽略控件）
-- **Shift 键**：按住时停止捕获并保留当前信息
-
-## 🚀 使用方法
-
-### 基本操作
-1. 启动程序后，窗口会自动置顶显示
-2. 点击「开始捕获」按钮开始捕获模式
-3. 将鼠标移动到目标窗口或控件上
-4. 工具会实时显示当前位置的窗口/控件信息
-5. 点击「停止捕获」按钮或按住 Shift 键停止捕获
-
-### 控件捕获模式
-- **启用控件捕获**：勾选「捕获控件」复选框，可以识别窗口内的子控件
-- **仅捕获窗口**：取消勾选或按住 Ctrl 键，只捕获顶级窗口
-
-### 高亮边框
-- 勾选「显示高亮边框」可在目标周围显示红色边框
-- 边框采用鼠标穿透设计，不会影响目标程序的操作
-
-### 窗口树
-1. 切换到「窗口树」选项卡
-2. 点击「刷新」按钮或勾选「自动刷新」
-3. 树形结构会显示当前窗口的完整层级
-4. 点击任意节点可高亮对应窗口（需开启高亮边框）
-
-## 🛠️ 技术实现
-
-### 技术栈
-- **.NET 8.0 (Windows)**
-- **WPF (Windows Presentation Foundation)**
-- **Windows API (User32.dll)**
-
-### 核心 Windows API
-```csharp
-// 鼠标和窗口位置
-GetCursorPos, WindowFromPoint, ScreenToClient, ClientToScreen
-
-// 窗口信息获取
-GetWindowText, GetClassName, GetWindowRect, GetWindowThreadProcessId
-
-// 窗口层级关系
-GetParent, GetAncestor, EnumChildWindows, RealChildWindowFromPoint
-
-// 窗口样式和属性
-GetWindowLong, SetWindowLong, IsWindowVisible
-
-// 键盘状态检测
-GetAsyncKeyState
-```
-
-### 项目结构
 ```
 capture/
-├── MainWindow.xaml           # 主窗口 UI 定义
-├── MainWindow.xaml.cs        # 主窗口逻辑实现
-├── HighlightWindow.xaml      # 高亮边框窗口 UI
-├── HighlightWindow.xaml.cs   # 高亮边框窗口逻辑
-├── App.xaml                  # 应用程序资源
-├── App.xaml.cs               # 应用程序入口
-└── capture.csproj            # 项目配置文件
+├── Core/                          # 核心类库
+│   ├── IWindowCapture.cs         # 窗口捕获接口
+│   ├── FlaUIWindowCapture.cs     # FlaUI 实现
+│   ├── WindowInfo.cs             # 窗口信息模型
+│   └── WindowCapture.Core.csproj
+├── tests/                         # CLI 测试工具
+│   ├── Program.cs
+│   └── WindowCapture.Tests.csproj
+├── MainWindow.xaml               # WPF 主窗口
+├── MainWindow.xaml.cs
+├── HighlightWindow.xaml          # 高亮边框窗口
+└── capture.csproj
 ```
 
-### 核心类说明
-- **MainWindow**：主窗口类，负责信息捕获、显示和交互逻辑
-- **HighlightWindow**：高亮边框窗口类，提供可视化边框效果
-- **WindowTreeItem**：窗口树节点数据类，用于树形展示
+## 快速开始
 
-## 📋 系统要求
+### 运行主程序
 
-- **操作系统**：Windows 10/11（或支持 .NET 8.0 的 Windows 版本）
-- **运行时**：.NET 8.0 Desktop Runtime
-- **架构**：x64 / x86
-
-## 🔧 编译和运行
-
-### 使用 Visual Studio
-1. 打开 `capture.slnx` 解决方案文件
-2. 选择 Release 或 Debug 配置
-3. 按 F5 或点击「启动」按钮
-
-### 使用命令行
 ```powershell
-# 编译
-dotnet build capture.csproj
-
-# 运行
 dotnet run --project capture.csproj
-
-# 发布（单文件）
-dotnet publish -c Release -r win-x64 --self-contained
 ```
 
-## 📝 使用场景
+### 使用 CLI 测试工具
 
-- **UI 自动化测试**：获取窗口和控件的句柄、类名等信息
-- **窗口分析**：研究应用程序的窗口结构和层级关系
-- **调试工具**：辅助开发者定位和分析窗口问题
-- **学习 Windows API**：理解 Windows 窗口系统的工作原理
+CLI 工具提供快速验证窗口捕获功能的命令：
 
-## ⚠️ 注意事项
+```powershell
+# 获取鼠标位置
+dotnet run --project tests\WindowCapture.Tests.csproj cursor
 
-1. **管理员权限**：某些受保护的系统窗口可能需要管理员权限才能获取完整信息
-2. **自动刷新性能**：窗口树的「自动刷新」选项会频繁枚举子窗口，可能影响性能
-3. **窗口自身排除**：工具会自动排除自身窗口和高亮边框窗口，避免循环捕获
-4. **置顶模式**：窗口始终置顶显示，方便查看其他窗口信息
+# 获取鼠标位置的窗口信息
+dotnet run --project tests\WindowCapture.Tests.csproj window
 
-## 🐛 已知问题
+# 深度搜索控件
+dotnet run --project tests\WindowCapture.Tests.csproj deep
 
-- 某些特殊窗口（如全屏游戏、某些系统窗口）可能无法正确捕获
-- 高亮边框在某些高 DPI 设置下可能存在轻微偏移
+# 显示窗口树
+dotnet run --project tests\WindowCapture.Tests.csproj tree
 
-## 📄 许可证
+# 持续监控模式（500ms 间隔）
+dotnet run --project tests\WindowCapture.Tests.csproj monitor 500
+```
 
-本项目使用的许可证请参考项目根目录的 LICENSE 文件。
+### CLI 命令说明
 
-## 🤝 贡献
+- **cursor**: 3秒后获取一次鼠标位置
+- **window**: 3秒后获取鼠标位置的窗口信息（包括根窗口）
+- **deep**: 3秒后深度搜索鼠标位置的最深层控件
+- **tree [handle]**: 显示窗口的层次结构树（可选指定句柄）
+- **monitor [interval]**: 持续监控模式，实时显示鼠标位置的窗口信息（按 Ctrl+C 退出）
+
+## 使用说明
+
+### 主界面功能
+
+1. **开始/停止捕获**: 点击按钮开始实时捕获鼠标位置的窗口信息
+2. **显示高亮边框**: 勾选后会在目标窗口周围显示红色边框
+3. **捕获控件**: 勾选后会捕获子控件，否则只捕获顶级窗口
+
+### 快捷键
+
+- **Ctrl**: 按住时临时禁用控件捕获，只捕获顶级窗口
+- **Shift**: 按住时停止捕获并保留当前信息
+
+### 显示信息
+
+#### 鼠标位置
+- 屏幕坐标：相对于整个屏幕的坐标
+- 窗口坐标：相对于窗口客户区的坐标
+
+#### 控件信息（仅在捕获控件时显示）
+- 控件句柄
+- 控件类名
+- 控件文本
+- 控件位置和大小
+
+#### 窗口信息
+- 窗口句柄
+- 窗口标题
+- 窗口类名
+- 窗口位置和大小
+- 进程 ID 和名称
+- 父窗口句柄
+- 窗口样式
+- **AutomationId**: UI Automation 标识符（FlaUI 特有）
+- **控件类型**: 控件的类型（如 Button、TextBox、Window 等）
+- **框架ID**: 窗口所使用的 UI 框架（如 WPF、WinForms、Win32）
+
+#### 窗口树
+显示当前窗口的完整层次结构，包括所有子窗口和控件。
+
+## 架构设计
+
+### 抽象层设计
+
+项目采用接口抽象设计，便于切换不同的窗口捕获底层实现：
+
+```csharp
+IWindowCapture                    # 窗口捕获接口
+└── FlaUIWindowCapture           # FlaUI 实现（基于 UI Automation）
+```
+
+### 核心接口
+
+`IWindowCapture` 提供以下核心方法：
+
+- `GetCursorPosition()`: 获取鼠标位置
+- `GetWindowFromPoint()`: 从坐标获取窗口
+- `GetRootWindow()`: 获取根窗口
+- `ScreenToClient()`: 坐标转换
+- `BuildWindowTree()`: 构建窗口树
+- `GetChildWindows()`: 获取子窗口列表
+
+### 扩展其他实现
+
+如果需要切换到其他窗口捕获技术（如 Win32 API、Accessibility API 等），只需：
+
+1. 实现 `IWindowCapture` 接口
+2. 在 `MainWindow` 构造函数中替换实现：
+
+```csharp
+// 当前使用 FlaUI
+_windowCapture = new FlaUIWindowCapture();
+
+// 切换到其他实现（如 Win32）
+_windowCapture = new Win32WindowCapture();
+```
+
+## 技术栈
+
+- **.NET 8.0 (Windows)**
+- **WPF**: Windows Presentation Foundation
+- **FlaUI 5.0**: UI Automation 库
+  - FlaUI.Core
+  - FlaUI.UIA3
+
+## 开发指南
+
+### 编译项目
+
+```powershell
+# 编译核心类库
+dotnet build Core\WindowCapture.Core.csproj
+
+# 编译测试工具
+dotnet build tests\WindowCapture.Tests.csproj
+
+# 编译主程序
+dotnet build capture.csproj
+```
+
+### 添加新的捕获实现
+
+1. 在 `Core` 目录下创建新类，实现 `IWindowCapture` 接口
+2. 实现所有必需的方法
+3. 在 `MainWindow.xaml.cs` 中切换实现
+
+示例：
+
+```csharp
+public class CustomWindowCapture : IWindowCapture
+{
+    public Point GetCursorPosition() { /* 实现 */ }
+    public WindowInfo? GetWindowFromPoint(Point screenPoint, bool deepSearch = false) { /* 实现 */ }
+    // ... 其他方法
+}
+```
+
+## 常见问题
+
+### Q: 为什么有些窗口无法捕获？
+A: 某些应用程序可能有提升的权限或使用了特殊的窗口技术。尝试以管理员身份运行本工具。
+
+### Q: AutomationId 显示为"(无)"？
+A: 并非所有控件都设置了 AutomationId，这取决于应用程序开发者的实现。
+
+### Q: 如何切换回 Win32 API？
+A: 实现一个新的 `IWindowCapture` 类使用 Win32 API，然后在 `MainWindow` 构造函数中切换即可。
+
+## License
+
+MIT License
+
+## 贡献
 
 欢迎提交 Issue 和 Pull Request！
-
-## 📧 联系方式
-
-如有问题或建议，请通过 GitHub Issues 联系。
-
-

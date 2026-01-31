@@ -50,8 +50,10 @@
                           VerticalAlignment="Center" Margin="15,0,0,0" IsChecked="True"/>
                 <CheckBox x:Name="CaptureControlCheckBox" Content="捕获控件" 
                           VerticalAlignment="Center" Margin="15,0,0,0" IsChecked="True"/>
+                <TextBlock x:Name="StatusText" VerticalAlignment="Center" Margin="15,0,0,0" 
+                           Foreground="#FF6B00" FontWeight="Bold" Text=""/>
             </StackPanel>
-            <TextBlock Text="提示：Ctrl键=只捕获顶级窗口 | Shift键=停止捕获并保留信息" 
+            <TextBlock Text="提示：Ctrl键=只捕获顶级窗口 | Shift键=停止捕获并保留信息 | 请将鼠标移到其他窗口上" 
                        Margin="0,8,0,0" Foreground="Gray" TextWrapping="Wrap" FontSize="11"/>
         </StackPanel>
 
@@ -128,6 +130,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="窗口句柄：" Margin="0,3"/>
@@ -165,6 +170,18 @@
                             <TextBlock Grid.Row="8" Grid.Column="0" Text="窗口样式：" Margin="0,3"/>
                             <TextBox Grid.Row="8" Grid.Column="1" x:Name="WindowStyleText" IsReadOnly="True" 
                                      Background="White" Margin="0,3" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="AutomationId：" Margin="0,3"/>
+                            <TextBox Grid.Row="9" Grid.Column="1" x:Name="AutomationIdText" IsReadOnly="True" 
+                                     Background="White" Margin="0,3"/>
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="控件类型：" Margin="0,3"/>
+                            <TextBox Grid.Row="10" Grid.Column="1" x:Name="ControlTypeText" IsReadOnly="True" 
+                                     Background="White" Margin="0,3"/>
+
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="框架ID：" Margin="0,3"/>
+                            <TextBox Grid.Row="11" Grid.Column="1" x:Name="FrameworkIdText" IsReadOnly="True" 
+                                     Background="White" Margin="0,3"/>
                         </Grid>
                     </ScrollViewer>
                 </Border>
