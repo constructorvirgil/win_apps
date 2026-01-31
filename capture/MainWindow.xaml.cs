@@ -160,17 +160,20 @@ namespace capture
                     _highlightWindow?.Hide();
                 }
 
-                // 更新控件信息
+                // 更新控件信息（实时更新）
                 if (controlWindow != null)
                 {
+                    // 记录当前控件句柄
                     if (controlWindow.Handle != _lastControlHandle)
                     {
                         _lastControlHandle = controlWindow.Handle;
-                        UpdateControlInfo(controlWindow);
                     }
+                    // 始终更新控件信息（控件的文本、位置等可能随时变化）
+                    UpdateControlInfo(controlWindow);
                 }
                 else
                 {
+                    // 没有控件时清空信息
                     if (_lastControlHandle != "")
                     {
                         _lastControlHandle = "";
@@ -178,12 +181,14 @@ namespace capture
                     }
                 }
 
-                // 更新窗口信息（只在窗口句柄变化时更新）
+                // 更新窗口信息（始终更新，确保实时性）
+                // 窗口标题、位置、状态等可能随时变化，需要实时刷新
                 if (rootWindow.Handle != _lastHandle)
                 {
+                    // 窗口句柄变化了，记录新句柄
                     _lastHandle = rootWindow.Handle;
-                    UpdateWindowInfo(rootWindow);
                 }
+                UpdateWindowInfo(rootWindow);  // 始终更新
 
                 // 如果自动刷新开启，更新窗口树
                 if (AutoRefreshTreeCheckBox.IsChecked == true && rootWindow.Handle != _lastTreeRootHandle)
