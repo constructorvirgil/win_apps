@@ -1,8 +1,16 @@
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows.Interop;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using VirtualHidSimulator.App.Services;
+using VirtualHidSimulator.App.Settings;
+using VirtualHidSimulator.Capture;
 using VirtualHidSimulator.Core.Drivers;
 using VirtualHidSimulator.Core.HidDefinitions;
 using VirtualHidSimulator.Services;
@@ -16,10 +24,22 @@ namespace VirtualHidSimulator.App;
 public partial class MainWindow : Window
 {
     private readonly InputSimulator _simulator;
+    private readonly AppSettings _settings;
+    private GlobalHotkeyService? _hotkeyService;
+    private bool _hotkeyRegistered;
+    private bool _isRecordingScreenshotHotkey;
+    private HotkeySettings? _pendingScreenshotHotkey;
+    private int _captureInProgress;
+
+    private const int ScreenshotHotkeyId = 0x5153; // 'QS'
 
     public MainWindow()
     {
         InitializeComponent();
+        _settings = SettingsStore.Load();
+        ScreenshotIncludeCursorCheckBox.IsChecked = _settings.ScreenshotIncludeCursor;
+        ScreenshotHotkeyTextBox.Text = FormatHotkey(_settings.ScreenshotHotkey);
+
         _simulator = InputSimulator.Create();
         
         // 初始化驱动选择
@@ -27,6 +47,271 @@ public partial class MainWindow : Window
         
         UpdateStatus("输入模拟器已初始化");
     }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+
+        if (PresentationSource.FromVisual(this) is HwndSource source)
+        {
+            _hotkeyService = new GlobalHotkeyService(source, OnGlobalHotkey);
+            ApplyScreenshotHotkeyFromSettings();
+        }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        try
+        {
+            if (_hotkeyService != null && _hotkeyRegistered)
+            {
+                _hotkeyService.Unregister(ScreenshotHotkeyId);
+                _hotkeyRegistered = false;
+            }
+        }
+        catch { }
+
+        try { _hotkeyService?.Dispose(); } catch { }
+
+        base.OnClosed(e);
+    }
+
+    #region 截图/热键
+
+    private void RecordScreenshotHotkey_Click(object sender, RoutedEventArgs e)
+    {
+        _isRecordingScreenshotHotkey = true;
+        ScreenshotHotkeyTextBox.Text = "请按下组合键...";
+        ScreenshotHotkeyTextBox.Focus();
+    }
+
+    private void ScreenshotHotkeyTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!_isRecordingScreenshotHotkey) return;
+
+        e.Handled = true;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (IsModifierKey(key)) return;
+
+        var mods = GetHotkeyModifiers();
+        if (mods == 0)
+        {
+            UpdateStatus("请至少包含 Ctrl / Alt / Shift / Win 之一作为修饰键");
+            return;
+        }
+
+        uint vk = (uint)KeyInterop.VirtualKeyFromKey(key);
+        if (vk == 0) return;
+
+        _pendingScreenshotHotkey = new HotkeySettings { Modifiers = mods, VirtualKey = vk };
+        ScreenshotHotkeyTextBox.Text = FormatHotkey(_pendingScreenshotHotkey);
+
+        _isRecordingScreenshotHotkey = false;
+        UpdateStatus("已录入快捷键，点击“应用”生效");
+    }
+
+    private void ApplyScreenshotHotkey_Click(object sender, RoutedEventArgs e)
+    {
+        var nextHotkey = _pendingScreenshotHotkey ?? _settings.ScreenshotHotkey;
+        var includeCursor = ScreenshotIncludeCursorCheckBox.IsChecked == true;
+
+        if (_hotkeyService == null)
+        {
+            _settings.ScreenshotHotkey = nextHotkey;
+            _settings.ScreenshotIncludeCursor = includeCursor;
+            SettingsStore.Save(_settings);
+            ScreenshotHotkeyTextBox.Text = FormatHotkey(_settings.ScreenshotHotkey);
+            UpdateStatus("设置已保存（窗口初始化后生效）");
+            return;
+        }
+
+        var prevHotkey = _settings.ScreenshotHotkey;
+        var wasRegistered = _hotkeyRegistered;
+
+        try
+        {
+            if (wasRegistered) _hotkeyService.Unregister(ScreenshotHotkeyId);
+            _hotkeyRegistered = false;
+
+            if (!_hotkeyService.TryRegister(ScreenshotHotkeyId, nextHotkey.Modifiers, nextHotkey.VirtualKey))
+            {
+                if (wasRegistered)
+                {
+                    _hotkeyRegistered = _hotkeyService.TryRegister(ScreenshotHotkeyId, prevHotkey.Modifiers, prevHotkey.VirtualKey);
+                }
+
+                MessageBox.Show(
+                    "快捷键注册失败（可能已被其他软件占用或为系统保留快捷键）。\n请更换组合键后重试。",
+                    "快捷键冲突",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                ScreenshotHotkeyTextBox.Text = FormatHotkey(prevHotkey);
+                return;
+            }
+
+            _hotkeyRegistered = true;
+            _settings.ScreenshotHotkey = nextHotkey;
+            _settings.ScreenshotIncludeCursor = includeCursor;
+            SettingsStore.Save(_settings);
+
+            _pendingScreenshotHotkey = null;
+            ScreenshotHotkeyTextBox.Text = FormatHotkey(_settings.ScreenshotHotkey);
+            UpdateStatus("全局截图快捷键已生效");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"应用快捷键失败：\n{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            ScreenshotHotkeyTextBox.Text = FormatHotkey(prevHotkey);
+        }
+    }
+
+    private async void CaptureToClipboard_Click(object sender, RoutedEventArgs e)
+    {
+        await CaptureToClipboardAsync();
+    }
+
+    private void OnGlobalHotkey(int id)
+    {
+        if (id != ScreenshotHotkeyId) return;
+        _ = CaptureToClipboardAsync();
+    }
+
+    private void ApplyScreenshotHotkeyFromSettings()
+    {
+        if (_hotkeyService == null) return;
+
+        try
+        {
+            if (_hotkeyRegistered)
+            {
+                _hotkeyService.Unregister(ScreenshotHotkeyId);
+                _hotkeyRegistered = false;
+            }
+
+            _hotkeyRegistered = _hotkeyService.TryRegister(ScreenshotHotkeyId, _settings.ScreenshotHotkey.Modifiers, _settings.ScreenshotHotkey.VirtualKey);
+            if (!_hotkeyRegistered)
+            {
+                UpdateStatus("全局截图快捷键注册失败（可能冲突）。请在“截图/热键”页重新设置。");
+            }
+        }
+        catch
+        {
+            UpdateStatus("全局截图快捷键初始化失败。");
+        }
+    }
+
+    private async Task CaptureToClipboardAsync()
+    {
+        if (Interlocked.Exchange(ref _captureInProgress, 1) == 1) return;
+
+        try
+        {
+            var swTotal = Stopwatch.StartNew();
+            UpdateStatus("正在截图...");
+            bool includeCursor = ScreenshotIncludeCursorCheckBox.IsChecked == true;
+
+            var swCapture = Stopwatch.StartNew();
+            var (image, _) = await Task.Run(() => VirtualScreenCapture.CaptureVirtualScreen(new CaptureOptions(includeCursor, JpegQuality: 85)));
+            swCapture.Stop();
+
+            var swClipboard = Stopwatch.StartNew();
+            // Keep UX snappy: don't wait too long on clipboard contention.
+            var clipboardOk = await Dispatcher.InvokeAsync(() => TrySetClipboardImage(image, TimeSpan.FromMilliseconds(700)));
+            swClipboard.Stop();
+            if (clipboardOk)
+            {
+                swTotal.Stop();
+                UpdateStatus($"截图已复制到剪贴板（capture={swCapture.ElapsedMilliseconds}ms, clipboard={swClipboard.ElapsedMilliseconds}ms, total={swTotal.ElapsedMilliseconds}ms）");
+                return;
+            }
+
+            // Clipboard is busy: fall back to saving a JPEG so the user still gets the screenshot.
+            var swEncode = Stopwatch.StartNew();
+            var bytes = VirtualScreenCapture.EncodeJpeg(image, 85);
+            swEncode.Stop();
+            var path = GetFallbackScreenshotPath();
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            var swWrite = Stopwatch.StartNew();
+            File.WriteAllBytes(path, bytes);
+            swWrite.Stop();
+            swTotal.Stop();
+
+            UpdateStatus($"剪贴板占用，已保存截图到文件（capture={swCapture.ElapsedMilliseconds}ms, encode={swEncode.ElapsedMilliseconds}ms, write={swWrite.ElapsedMilliseconds}ms, total={swTotal.ElapsedMilliseconds}ms）");
+            MessageBox.Show(
+                $"剪贴板当前正被其他程序占用，已将截图保存为：\n{path}",
+                "截图已保存",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus("截图失败");
+            MessageBox.Show($"截图失败：\n{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _captureInProgress, 0);
+        }
+    }
+
+    private static bool TrySetClipboardImage(BitmapSource image, TimeSpan timeout)
+    {
+        return ClipboardImageWriter.TrySetImage(image, timeout, out _);
+    }
+
+    private static string GetFallbackScreenshotPath()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            "VirtualHidSimulator",
+            "Screenshots");
+
+        var name = $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss_fff}.jpg";
+        return Path.Combine(dir, name);
+    }
+
+    private static bool IsModifierKey(Key key) =>
+        key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift
+            or Key.LWin or Key.RWin;
+
+    private static uint GetHotkeyModifiers()
+    {
+        uint mods = 0;
+        var wpfMods = Keyboard.Modifiers;
+
+        if (wpfMods.HasFlag(ModifierKeys.Control)) mods |= HotkeyModifiers.Control;
+        if (wpfMods.HasFlag(ModifierKeys.Alt)) mods |= HotkeyModifiers.Alt;
+        if (wpfMods.HasFlag(ModifierKeys.Shift)) mods |= HotkeyModifiers.Shift;
+
+        // WPF 通常无法在 Modifiers 中反映 Win 键，使用 GetAsyncKeyState 补齐
+        if ((GetAsyncKeyState(VK_LWIN) & 0x8000) != 0 || (GetAsyncKeyState(VK_RWIN) & 0x8000) != 0)
+            mods |= HotkeyModifiers.Win;
+
+        return mods;
+    }
+
+    private static string FormatHotkey(HotkeySettings hotkey)
+    {
+        var parts = new List<string>();
+        if ((hotkey.Modifiers & HotkeyModifiers.Control) != 0) parts.Add("Ctrl");
+        if ((hotkey.Modifiers & HotkeyModifiers.Alt) != 0) parts.Add("Alt");
+        if ((hotkey.Modifiers & HotkeyModifiers.Shift) != 0) parts.Add("Shift");
+        if ((hotkey.Modifiers & HotkeyModifiers.Win) != 0) parts.Add("Win");
+
+        var key = KeyInterop.KeyFromVirtualKey((int)hotkey.VirtualKey);
+        parts.Add(key.ToString());
+        return string.Join("+", parts);
+    }
+
+    private const int VK_LWIN = 0x5B;
+    private const int VK_RWIN = 0x5C;
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
+
+    #endregion
 
     #region 驱动选择
 

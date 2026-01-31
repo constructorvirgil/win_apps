@@ -367,6 +367,41 @@
                     </Grid>
                 </Grid>
             </TabItem>
+
+            <TabItem Header="截图/热键">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock TextWrapping="Wrap" Margin="5" Foreground="Gray">
+                            <Run>设置全局截图快捷键（全局生效）。触发后会将“所有显示器拼接的大图”写入剪贴板。</Run>
+                        </TextBlock>
+
+                        <GroupBox Header="快捷键">
+                            <StackPanel>
+                                <WrapPanel>
+                                    <TextBlock Text="当前快捷键:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBox x:Name="ScreenshotHotkeyTextBox" Width="260" IsReadOnly="True"
+                                             PreviewKeyDown="ScreenshotHotkeyTextBox_PreviewKeyDown"
+                                             ToolTip="点击“录入”，然后按下组合键（例如 Ctrl+Alt+S）"/>
+                                    <Button Content="录入" Click="RecordScreenshotHotkey_Click" Margin="8,0,0,0"/>
+                                    <Button Content="应用" Click="ApplyScreenshotHotkey_Click" Margin="8,0,0,0"
+                                            Background="#FF2196F3" Foreground="White" FontWeight="Bold"/>
+                                </WrapPanel>
+                                <TextBlock Text="提示：快捷键占用冲突时将无法注册，应用会保留原快捷键。" Foreground="Gray" FontSize="11" Margin="3,5,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="截图选项">
+                            <StackPanel>
+                                <CheckBox x:Name="ScreenshotIncludeCursorCheckBox" Content="包含鼠标光标" IsChecked="True"/>
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Button Content="立即截图到剪贴板" Click="CaptureToClipboard_Click"
+                                            Background="#FF4CAF50" Foreground="White" FontWeight="Bold"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
         </TabControl>
         
         <!-- 状态栏 -->

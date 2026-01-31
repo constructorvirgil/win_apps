@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\\VirtualHidSimulator.Core\\VirtualHidSimulator.Core.csproj" />
+    <ProjectReference Include="..\\VirtualHidSimulator.Capture\\VirtualHidSimulator.Capture.csproj" />
   </ItemGroup>
 
 </Project>
