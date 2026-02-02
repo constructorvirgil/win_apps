@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "automation", "automation", "{89D9E52B-D642-420F-BD9E-03B08F94D450}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{816EDDD9-A2E2-4E09-B86F-CDF3091C83E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualHidSimulator.App", "automation\src\VirtualHidSimulator.App\VirtualHidSimulator.App.csproj", "{633D0552-44BC-441C-8176-E3B330596AF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "capture", "capture\capture.csproj", "{52449FD9-D2A0-4676-8BD8-2B33022006AD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "capture", "capture", "{0BA84208-FEDA-479C-B812-F7DFC1DFBD17}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{633D0552-44BC-441C-8176-E3B330596AF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{633D0552-44BC-441C-8176-E3B330596AF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{633D0552-44BC-441C-8176-E3B330596AF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{633D0552-44BC-441C-8176-E3B330596AF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{816EDDD9-A2E2-4E09-B86F-CDF3091C83E4} = {89D9E52B-D642-420F-BD9E-03B08F94D450}
+		{633D0552-44BC-441C-8176-E3B330596AF7} = {816EDDD9-A2E2-4E09-B86F-CDF3091C83E4}
+		{52449FD9-D2A0-4676-8BD8-2B33022006AD} = {0BA84208-FEDA-479C-B812-F7DFC1DFBD17}
+	EndGlobalSection
+EndGlobal

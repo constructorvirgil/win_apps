@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="Core\WindowCapture.Core.csproj" />
+    <ProjectReference Include="..\\shared\\WindowCapture.Core\\WindowCapture.Core.csproj" />
   </ItemGroup>
 
 </Project>

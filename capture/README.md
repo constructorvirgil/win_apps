@@ -157,7 +157,7 @@ _windowCapture = new Win32WindowCapture();
 
 ```powershell
 # 编译核心类库
-dotnet build Core\WindowCapture.Core.csproj
+dotnet build ..\shared\WindowCapture.Core\WindowCapture.Core.csproj
 
 # 编译测试工具
 dotnet build tests\WindowCapture.Tests.csproj

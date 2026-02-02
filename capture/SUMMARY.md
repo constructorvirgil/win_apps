@@ -23,7 +23,7 @@
 - FlaUI.Core 5.0.0
 - FlaUI.UIA3 5.0.0
 
-**核心类库**: `Core/WindowCapture.Core.csproj`
+**核心类库**: `shared/WindowCapture.Core/WindowCapture.Core.csproj`
 
 ### ✅ 4. 重构 MainWindow 使用抽象层
 - 完全移除旧的 Win32 API 调用
@@ -100,7 +100,7 @@ public MainWindow()
 ```
 
 ### 3. 独立的核心类库
-- `Core/WindowCapture.Core.csproj` 可被其他项目引用
+- `shared/WindowCapture.Core/WindowCapture.Core.csproj` 可被其他项目引用
 - 无 UI 依赖，纯粹的业务逻辑
 - 便于单元测试
 

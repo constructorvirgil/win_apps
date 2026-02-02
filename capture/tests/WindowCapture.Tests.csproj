@@ -5,11 +5,16 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
     <Platforms>x64;AnyCPU</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\WindowCapture.Core.csproj" />
+    <ProjectReference Include="..\\..\\shared\\WindowCapture.Core\\WindowCapture.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4.Extensions" Version="4.10.0.20240616" />
   </ItemGroup>
 
 </Project>

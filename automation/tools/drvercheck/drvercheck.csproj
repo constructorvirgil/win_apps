@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\\..\\src\\VirtualHidSimulator.Core\\VirtualHidSimulator.Core.csproj" />
+    <ProjectReference Include="..\\..\\..\\shared\\VirtualHidSimulator.Core\\VirtualHidSimulator.Core.csproj" />
   </ItemGroup>
 
 </Project>

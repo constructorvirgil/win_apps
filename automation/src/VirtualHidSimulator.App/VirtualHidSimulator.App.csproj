@@ -23,8 +23,8 @@
   -->
 
   <ItemGroup>
-    <ProjectReference Include="..\\VirtualHidSimulator.Core\\VirtualHidSimulator.Core.csproj" />
-    <ProjectReference Include="..\\VirtualHidSimulator.Capture\\VirtualHidSimulator.Capture.csproj" />
+    <ProjectReference Include="..\\..\\..\\shared\\VirtualHidSimulator.Core\\VirtualHidSimulator.Core.csproj" />
+    <ProjectReference Include="..\\..\\..\\shared\\VirtualHidSimulator.Capture\\VirtualHidSimulator.Capture.csproj" />
   </ItemGroup>
 
 </Project>

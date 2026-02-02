@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using capture.Core;
 
 namespace capture
@@ -47,6 +50,12 @@ namespace capture
             // 初始化高亮窗口
             _highlightWindow = new HighlightWindow();
             _highlightWindow.Owner = this;
+
+            // 模板匹配默认值（便于快速验证）
+            if (string.IsNullOrWhiteSpace(MatchImagePathTextBox.Text))
+                MatchImagePathTextBox.Text = "20260131-170700.jpg";
+            if (string.IsNullOrWhiteSpace(MatchTemplatePathTextBox.Text))
+                MatchTemplatePathTextBox.Text = "pic_template1.png";
 
             // 测试 FlaUI 是否正常工作
             try
@@ -404,6 +413,113 @@ namespace capture
             FrameworkIdText.Text = "";
             ClearControlInfo();
             WindowTreeView.Items.Clear();
+        }
+
+        private void BrowseMatchImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title = "选择大图",
+                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
+                CheckFileExists = true
+            };
+
+            if (dlg.ShowDialog(this) == true)
+            {
+                MatchImagePathTextBox.Text = dlg.FileName;
+            }
+        }
+
+        private void BrowseMatchTemplateButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title = "选择模板",
+                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp|All Files|*.*",
+                CheckFileExists = true
+            };
+
+            if (dlg.ShowDialog(this) == true)
+            {
+                MatchTemplatePathTextBox.Text = dlg.FileName;
+            }
+        }
+
+        private void RunTemplateMatchButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var imagePath = ResolveExistingPath(MatchImagePathTextBox.Text?.Trim());
+                var templatePath = ResolveExistingPath(MatchTemplatePathTextBox.Text?.Trim());
+
+                if (string.IsNullOrWhiteSpace(imagePath))
+                {
+                    MatchResultTextBlock.Text = "错误：未找到大图文件";
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(templatePath))
+                {
+                    MatchResultTextBlock.Text = "错误：未找到模板文件";
+                    return;
+                }
+
+                if (!TryParseDouble(MatchThresholdTextBox.Text?.Trim(), out var threshold))
+                {
+                    MatchResultTextBlock.Text = "错误：阈值格式不正确（例如 0.80）";
+                    return;
+                }
+
+                var options = new TemplateMatchOptions
+                {
+                    Threshold = threshold,
+                    UseGrayscale = true,
+                    UseCannyEdges = MatchUseCannyCheckBox.IsChecked == true,
+                };
+
+                var result = OpenCvTemplateMatcher.MatchFile(imagePath, templatePath, options);
+                var ok = result.IsMatch(threshold);
+
+                MatchResultTextBlock.Text =
+                    $"Score={result.Score.ToString("0.0000", CultureInfo.InvariantCulture)}; " +
+                    $"X={result.Location.X}, Y={result.Location.Y}; " +
+                    $"Rect=({result.MatchRect.Left},{result.MatchRect.Top},{result.MatchRect.Width},{result.MatchRect.Height}); " +
+                    $"{(ok ? "OK" : "FAIL")}";
+            }
+            catch (Exception ex)
+            {
+                MatchResultTextBlock.Text = $"错误：{ex.Message}";
+            }
+        }
+
+        private static bool TryParseDouble(string? text, out double value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                   || double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
+        }
+
+        private static string? ResolveExistingPath(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            if (File.Exists(input))
+                return Path.GetFullPath(input);
+
+            // Allow providing a bare filename like "pic_template1.png" when running from bin/...
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            for (var i = 0; i < 8 && dir != null; i++, dir = dir.Parent)
+            {
+                var candidate = Path.Combine(dir.FullName, input);
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            return null;
         }
 
         protected override void OnClosed(EventArgs e)
