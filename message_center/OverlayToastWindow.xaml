@@ -10,9 +10,10 @@
         Topmost="True">
   <Window.Resources>
     <LinearGradientBrush x:Key="CardBg" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#F8120A1A" Offset="0" />
-      <GradientStop Color="#F8160B23" Offset="0.55" />
-      <GradientStop Color="#F80A0714" Offset="1" />
+      <!-- 70% opacity (B3) -->
+      <GradientStop Color="#B3120A1A" Offset="0" />
+      <GradientStop Color="#B3160B23" Offset="0.55" />
+      <GradientStop Color="#B30A0714" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="AccentBg" StartPoint="0,0" EndPoint="1,1">
@@ -117,7 +118,7 @@
                  Grid.Row="0"
                  Grid.Column="1"
                  Margin="0,0,10,0"
-                 FontSize="13.5"
+                 FontSize="16"
                  FontWeight="SemiBold"
                  Foreground="#F5E9D5FF"
                  TextTrimming="CharacterEllipsis" />
