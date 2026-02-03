@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualHidSimulator.App", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "capture", "capture\capture.csproj", "{52449FD9-D2A0-4676-8BD8-2B33022006AD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "message_center", "message_center\message_center.csproj", "{140E1720-15F7-40C8-A8A9-2A5B9B199096}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "capture", "capture", "{0BA84208-FEDA-479C-B812-F7DFC1DFBD17}"
 EndProject
 Global
@@ -30,6 +32,10 @@ Global
 		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52449FD9-D2A0-4676-8BD8-2B33022006AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{140E1720-15F7-40C8-A8A9-2A5B9B199096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{140E1720-15F7-40C8-A8A9-2A5B9B199096}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{140E1720-15F7-40C8-A8A9-2A5B9B199096}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{140E1720-15F7-40C8-A8A9-2A5B9B199096}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{816EDDD9-A2E2-4E09-B86F-CDF3091C83E4} = {89D9E52B-D642-420F-BD9E-03B08F94D450}
