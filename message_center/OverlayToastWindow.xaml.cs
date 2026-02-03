@@ -8,8 +8,11 @@ namespace WinApps.MessageCenter;
 
 public partial class OverlayToastWindow : Window
 {
-    private readonly DispatcherTimer _closeTimer = new();
-    private readonly TimeSpan _duration;
+    private readonly DispatcherTimer _tickTimer = new() { Interval = TimeSpan.FromMilliseconds(50) };
+    private readonly TimeSpan _totalDuration;
+    private TimeSpan _remaining;
+    private DateTime _deadlineUtc;
+    private bool _paused;
     private bool _closing;
 
     public OverlayToastWindow(OverlayNotification notification)
@@ -20,28 +23,26 @@ public partial class OverlayToastWindow : Window
         MessageText.Text = notification.Message;
 
         Opacity = 0;
-        _duration = TimeSpan.FromMilliseconds(Math.Max(800, notification.DurationMs));
-        _closeTimer.Interval = _duration;
-        _closeTimer.Tick += (_, _) =>
-        {
-            _closeTimer.Stop();
-            BeginFadeOutAndClose();
-        };
+        _totalDuration = TimeSpan.FromMilliseconds(Math.Max(800, notification.DurationMs));
+        _remaining = _totalDuration;
+        _tickTimer.Tick += (_, _) => Tick();
 
         Loaded += (_, _) =>
         {
             BeginFadeIn();
-            BeginProgress();
-            _closeTimer.Start();
+            StartOrResumeCountdown();
         };
 
         Closed += (_, _) =>
         {
-            _closeTimer.Stop();
+            _tickTimer.Stop();
         };
 
         CloseButton.Click += (_, _) => BeginFadeOutAndClose();
         MouseLeftButtonDown += (_, _) => BeginFadeOutAndClose();
+
+        Root.MouseEnter += (_, _) => PauseCountdown();
+        Root.MouseLeave += (_, _) => StartOrResumeCountdown();
     }
 
     public void SetBounds(double left, double top, double width, double height)
@@ -73,8 +74,7 @@ public partial class OverlayToastWindow : Window
             return;
 
         _closing = true;
-        _closeTimer.Stop();
-        ProgressScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, null);
+        _tickTimer.Stop();
 
         var anim = new DoubleAnimation(Opacity, 0, new Duration(TimeSpan.FromMilliseconds(180)))
         {
@@ -90,12 +90,48 @@ public partial class OverlayToastWindow : Window
         SlideTransform.BeginAnimation(TranslateTransform.XProperty, slide);
     }
 
-    private void BeginProgress()
+    private void Tick()
     {
-        var anim = new DoubleAnimation(1, 0, new Duration(_duration))
+        if (_closing)
         {
-            EasingFunction = null
-        };
-        ProgressScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, anim);
+            _tickTimer.Stop();
+            return;
+        }
+
+        var remaining = _deadlineUtc - DateTime.UtcNow;
+        if (remaining <= TimeSpan.Zero)
+        {
+            ProgressScale.ScaleX = 0;
+            _tickTimer.Stop();
+            BeginFadeOutAndClose();
+            return;
+        }
+
+        var ratio = remaining.TotalMilliseconds / _totalDuration.TotalMilliseconds;
+        ProgressScale.ScaleX = Math.Clamp(ratio, 0, 1);
+    }
+
+    private void PauseCountdown()
+    {
+        if (_closing || _paused)
+            return;
+
+        _paused = true;
+        _remaining = _deadlineUtc - DateTime.UtcNow;
+        if (_remaining < TimeSpan.Zero)
+            _remaining = TimeSpan.Zero;
+
+        _tickTimer.Stop();
+    }
+
+    private void StartOrResumeCountdown()
+    {
+        if (_closing)
+            return;
+
+        _paused = false;
+        _deadlineUtc = DateTime.UtcNow + _remaining;
+        Tick();
+        _tickTimer.Start();
     }
 }
