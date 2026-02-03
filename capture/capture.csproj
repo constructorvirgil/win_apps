@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\\shared\\WindowCapture.Core\\WindowCapture.Core.csproj" />
+    <ProjectReference Include="..\\shared\\VirtualHidSimulator.Capture\\VirtualHidSimulator.Capture.csproj" />
   </ItemGroup>
 
 </Project>

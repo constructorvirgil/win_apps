@@ -100,6 +100,16 @@ public static class VirtualScreenCapture
         return ms.ToArray();
     }
 
+    public static byte[] EncodePng(BitmapSource image)
+    {
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(image));
+
+        using var ms = new MemoryStream();
+        encoder.Save(ms);
+        return ms.ToArray();
+    }
+
     private static void DrawCursor(IntPtr targetDc, int virtualLeft, int virtualTop)
     {
         var cursorInfo = new CURSORINFO { cbSize = Marshal.SizeOf<CURSORINFO>() };

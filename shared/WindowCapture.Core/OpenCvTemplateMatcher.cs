@@ -4,6 +4,21 @@ namespace capture.Core
 {
     public static class OpenCvTemplateMatcher
     {
+        public static TemplateMatchResult MatchEncodedImage(byte[] imageBytes, string templatePath, TemplateMatchOptions? options = null)
+        {
+            options ??= new TemplateMatchOptions();
+
+            using var image = Cv2.ImDecode(imageBytes, ImreadModes.Color);
+            if (image.Empty())
+                throw new ArgumentException("Failed to decode image bytes", nameof(imageBytes));
+
+            using var template = Cv2.ImRead(templatePath, ImreadModes.Color);
+            if (template.Empty())
+                throw new FileNotFoundException($"Failed to read template: {templatePath}", templatePath);
+
+            return Match(image, template, options);
+        }
+
         public static TemplateMatchResult MatchFile(string imagePath, string templatePath, TemplateMatchOptions? options = null)
         {
             options ??= new TemplateMatchOptions();

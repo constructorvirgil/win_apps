@@ -1,12 +1,14 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using capture.Core;
+using VirtualHidSimulator.Capture;
 
 namespace capture
 {
@@ -53,7 +55,7 @@ namespace capture
 
             // 模板匹配默认值（便于快速验证）
             if (string.IsNullOrWhiteSpace(MatchImagePathTextBox.Text))
-                MatchImagePathTextBox.Text = "20260131-170700.jpg";
+                MatchImagePathTextBox.Text = "[SCREENSHOT]";
             if (string.IsNullOrWhiteSpace(MatchTemplatePathTextBox.Text))
                 MatchTemplatePathTextBox.Text = "pic_template1.png";
 
@@ -452,6 +454,12 @@ namespace capture
                 var imagePath = ResolveExistingPath(MatchImagePathTextBox.Text?.Trim());
                 var templatePath = ResolveExistingPath(MatchTemplatePathTextBox.Text?.Trim());
 
+                // 原图：使用当前屏幕截图（虚拟屏幕，覆盖多显示器）
+                var (bitmap, captureBounds) = VirtualScreenCapture.CaptureVirtualScreen(new CaptureOptions(IncludeCursor: false, JpegQuality: 95));
+                var screenshotBytes = VirtualScreenCapture.EncodePng(bitmap);
+                imagePath = "[SCREENSHOT]";
+                MatchImagePathTextBox.Text = imagePath;
+
                 if (string.IsNullOrWhiteSpace(imagePath))
                 {
                     MatchResultTextBlock.Text = "错误：未找到大图文件";
@@ -477,18 +485,78 @@ namespace capture
                     UseCannyEdges = MatchUseCannyCheckBox.IsChecked == true,
                 };
 
-                var result = OpenCvTemplateMatcher.MatchFile(imagePath, templatePath, options);
+                var result = OpenCvTemplateMatcher.MatchEncodedImage(screenshotBytes, templatePath, options);
+                var screenX = captureBounds.Left + result.Location.X;
+                var screenY = captureBounds.Top + result.Location.Y;
                 var ok = result.IsMatch(threshold);
 
                 MatchResultTextBlock.Text =
                     $"Score={result.Score.ToString("0.0000", CultureInfo.InvariantCulture)}; " +
-                    $"X={result.Location.X}, Y={result.Location.Y}; " +
+                    $"ImageXY=({result.Location.X},{result.Location.Y}); " +
+                    $"ScreenXY=({screenX},{screenY}); " +
                     $"Rect=({result.MatchRect.Left},{result.MatchRect.Top},{result.MatchRect.Width},{result.MatchRect.Height}); " +
                     $"{(ok ? "OK" : "FAIL")}";
             }
             catch (Exception ex)
             {
                 MatchResultTextBlock.Text = $"错误：{ex.Message}";
+            }
+        }
+
+        private void RunTemplateMatchAndMoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var templatePath = ResolveExistingPath(MatchTemplatePathTextBox.Text?.Trim());
+                if (string.IsNullOrWhiteSpace(templatePath))
+                {
+                    MatchResultTextBlock.Text = "Error: template file not found";
+                    return;
+                }
+
+                if (!TryParseDouble(MatchThresholdTextBox.Text?.Trim(), out var threshold))
+                {
+                    MatchResultTextBlock.Text = "Error: invalid threshold (e.g. 0.80)";
+                    return;
+                }
+
+                var options = new TemplateMatchOptions
+                {
+                    Threshold = threshold,
+                    UseGrayscale = true,
+                    UseCannyEdges = MatchUseCannyCheckBox.IsChecked == true,
+                };
+
+                // Source image: current virtual screen screenshot (covers multi-monitor)
+                var (bitmap, captureBounds) = VirtualScreenCapture.CaptureVirtualScreen(new CaptureOptions(IncludeCursor: false, JpegQuality: 95));
+                var screenshotBytes = VirtualScreenCapture.EncodePng(bitmap);
+                MatchImagePathTextBox.Text = "[SCREENSHOT]";
+
+                var result = OpenCvTemplateMatcher.MatchEncodedImage(screenshotBytes, templatePath, options);
+                var screenX = captureBounds.Left + result.Location.X;
+                var screenY = captureBounds.Top + result.Location.Y;
+                var ok = result.IsMatch(threshold);
+
+                var centerX = screenX + (result.TemplateWidth / 2);
+                var centerY = screenY + (result.TemplateHeight / 2);
+
+                var moved = false;
+                if (ok)
+                {
+                    moved = SetCursorPos(centerX, centerY);
+                }
+
+                MatchResultTextBlock.Text =
+                    $"Score={result.Score.ToString("0.0000", CultureInfo.InvariantCulture)}; " +
+                    $"ImageXY=({result.Location.X},{result.Location.Y}); " +
+                    $"ScreenXY=({screenX},{screenY}); " +
+                    $"CenterXY=({centerX},{centerY}); " +
+                    $"Rect=({result.MatchRect.Left},{result.MatchRect.Top},{result.MatchRect.Width},{result.MatchRect.Height}); " +
+                    (ok ? (moved ? "OK (MOVED)" : "OK") : "FAIL");
+            }
+            catch (Exception ex)
+            {
+                MatchResultTextBlock.Text = $"Error: {ex.Message}";
             }
         }
 
@@ -521,6 +589,9 @@ namespace capture
 
             return null;
         }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetCursorPos(int X, int Y);
 
         protected override void OnClosed(EventArgs e)
         {
