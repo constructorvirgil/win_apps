@@ -10,13 +10,14 @@
         Topmost="True">
   <Window.Resources>
     <LinearGradientBrush x:Key="CardBg" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#E6192139" Offset="0" />
-      <GradientStop Color="#E60F1329" Offset="1" />
+      <GradientStop Color="#F8120A1A" Offset="0" />
+      <GradientStop Color="#F8160B23" Offset="0.55" />
+      <GradientStop Color="#F80A0714" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="AccentBg" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#FF4F46E5" Offset="0" />
-      <GradientStop Color="#FF22D3EE" Offset="1" />
+      <GradientStop Color="#FF7C3AED" Offset="0" />
+      <GradientStop Color="#FFEC4899" Offset="1" />
     </LinearGradientBrush>
 
     <Style x:Key="IconButton" TargetType="Button">
@@ -52,14 +53,14 @@
 
   <Border x:Name="Root"
           Background="{StaticResource CardBg}"
-          BorderBrush="#22FFFFFF"
+          BorderBrush="#33A855F7"
           BorderThickness="1"
           CornerRadius="16"
           Padding="14"
           TextElement.FontFamily="Segoe UI, Microsoft YaHei UI"
           SnapsToDevicePixels="True">
     <Border.Effect>
-      <DropShadowEffect BlurRadius="28" ShadowDepth="10" Opacity="0.38" Color="#FF000000" />
+      <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.45" Color="#FF06010B" />
     </Border.Effect>
     <Border.RenderTransform>
       <TranslateTransform x:Name="SlideTransform" X="28" />
@@ -78,6 +79,21 @@
       </Grid.ColumnDefinitions>
 
       <Border Grid.Row="0"
+              Grid.RowSpan="3"
+              Grid.Column="0"
+              Grid.ColumnSpan="3"
+              CornerRadius="16"
+              IsHitTestVisible="False">
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#26C4B5FD" Offset="0" />
+            <GradientStop Color="#00000000" Offset="0.55" />
+            <GradientStop Color="#1E0EA5E9" Offset="1" />
+          </LinearGradientBrush>
+        </Border.Background>
+      </Border>
+
+      <Border Grid.Row="0"
               Grid.RowSpan="2"
               Grid.Column="0"
               Width="38"
@@ -86,7 +102,7 @@
               CornerRadius="14"
               Background="{StaticResource AccentBg}">
         <Border.Effect>
-          <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55" Color="#FF22D3EE" />
+          <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55" Color="#FF9333EA" />
         </Border.Effect>
         <Grid>
           <TextBlock Text="●"
@@ -103,7 +119,7 @@
                  Margin="0,0,10,0"
                  FontSize="13.5"
                  FontWeight="SemiBold"
-                 Foreground="#F2FFFFFF"
+                 Foreground="#F5E9D5FF"
                  TextTrimming="CharacterEllipsis" />
 
       <Button x:Name="CloseButton"
@@ -121,7 +137,7 @@
                  Grid.ColumnSpan="2"
                  Margin="0,6,0,0"
                  FontSize="12"
-                 Foreground="#B8FFFFFF"
+                 Foreground="#C0A1A1AA"
                  TextWrapping="Wrap" />
 
       <Border Grid.Row="2"
@@ -130,7 +146,7 @@
               Height="4"
               Margin="0,12,0,0"
               CornerRadius="3"
-              Background="#14FFFFFF">
+              Background="#141A0B2E">
         <Grid ClipToBounds="True">
           <Border x:Name="ProgressFill"
                   CornerRadius="3"
